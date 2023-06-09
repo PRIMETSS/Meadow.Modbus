@@ -168,7 +168,7 @@ namespace Meadow.Modbus
 
             if (registerCount > MaxRegisterReadCount) throw new ArgumentException($"A maximum of {MaxRegisterReadCount} registers can be retrieved at one time");
 
-            var message = GenerateReadMessage(modbusAddress, ModbusFunction.ReadHoldingRegister, startRegister, registerCount);
+            var message = GenerateReadMessage(modbusAddress, ModbusFunction.ReadHoldingRegisters, startRegister, registerCount);
             await _syncRoot.WaitAsync();
 
             byte[] result;
@@ -176,7 +176,7 @@ namespace Meadow.Modbus
             try
             {
                 await DeliverMessage(message);
-                result = await ReadResult(ModbusFunction.ReadHoldingRegister);
+                result = await ReadResult(ModbusFunction.ReadHoldingRegisters);
             }
             finally
             {

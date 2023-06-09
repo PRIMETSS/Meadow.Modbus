@@ -1,0 +1,10 @@
+30/5/2023
+
+Stopped development on this branch as it was working under high speed load, however after consideration the recovery of data flow after a break (Wireless links) 
+in data path caused library not to recover and go into a CRC loop. Mainly because packet frame recovery doesnt currenly take place.
+
+Refer hand written notes written for a possible Github Issue being raised on multiple issues & possible solutions, using a Fixed & Varible packet handling concept.
+Issues noted including non standard ModbusRTU funcation names and methods. Also a possible simple way to recover from CRC framing errors using clearing serial port buffer if correct response
+was not received from the last request.
+
+Since no response from previous PR & Issues posted to Github, I have decided to fork the library and continue development on my own forked branch at this time.

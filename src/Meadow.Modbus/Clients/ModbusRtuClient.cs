@@ -74,14 +74,17 @@ namespace Meadow.Modbus
             var t = 0;
             while (_port.BytesToRead < 5)
             {
-                await Task.Delay(10);
+                await Task.Delay(10);//10);
                 t += 10;
-                if (_port.ReadTimeout.TotalMilliseconds > 0 && t > _port.ReadTimeout.TotalMilliseconds) throw new TimeoutException();
+                                
+
+                if ((_port.ReadTimeout.TotalMilliseconds > 0) && (t >= _port.ReadTimeout.TotalMilliseconds)) throw new TimeoutException();
             }
 
             int headerLen = function switch
             {
-                ModbusFunction.WriteMultipleRegisters => 6,
+                ModbusFunction.WriteMultipleRegisters => 7,
+                ModbusFunction.WriteMultipleCoils => 7,
                 _ => 3
             };
 
@@ -92,27 +95,38 @@ namespace Meadow.Modbus
 
             int bufferLen;
             int resultLen;
+            const int CRCLength = 2;
 
             switch (function) // result function
             {
                 // ref: https://www.modbustools.com/modbus.html
 
-                case ModbusFunction.WriteMultipleRegisters:
-                case ModbusFunction.WriteMultipleCoils:
-                 case ModbusFunction.WriteCoil:
-                    bufferLen = 8; // fixed length
-                    resultLen = 0; // no result data
+                case ModbusFunction.WriteMultipleRegisters:                
+                case ModbusFunction.WriteSingleCoil:
+                case ModbusFunction.WriteSingleRegister:
+                    bufferLen = 6 + CRCLength; // fixed length
+                    resultLen = 0; // no variable result data
                     break;
-                case ModbusFunction.WriteRegister:
+                /*case ModbusFunction.WriteRegister:
                     bufferLen = 7 + header[headerLen - 1];
                     resultLen = header[2];
-                    break;
-                case ModbusFunction.ReadHoldingRegister:
-                    bufferLen = 5 + header[headerLen - 1];
+                    break;*/
+                case ModbusFunction.ReadHoldingRegisters: // ReadHoldingRegisters
+                    bufferLen = 3 + CRCLength + header[2]; // SlaveAddress + Function + ByteCount + CRCLength + Result[ByteCount]    //5 + header[headerLen - 1];
                     resultLen = header[2];
                     break;
+                case ModbusFunction.WriteMultipleCoils:
+                    bufferLen = 6 + CRCLength + header[6]; 
+                    resultLen = 0; // no variable result data
+                    break;
+
+                // ReadCoils Function: 01
+                // ReadDescreteInputs Function: 02
+                // ReadHoldingRegisters Function: 03
+                // ReadInputRegisters Function: 04
+                
                 default:
-                    bufferLen = 5 + header[headerLen - 1];
+                    bufferLen = 3 + CRCLength + header[headerLen - 1];
                     resultLen = header[2];
                     break;
             }
@@ -131,7 +145,7 @@ namespace Meadow.Modbus
             // do a CRC on all but the last 2 bytes, then see if that matches the last 2
             var expectedCrc = Crc(buffer, 0, buffer.Length - 2);
             var actualCrc = buffer[buffer.Length - 2] | buffer[buffer.Length - 1] << 8;
-            if (expectedCrc != actualCrc) { throw new CrcException(); }
+            if (expectedCrc != actualCrc) { throw new CrcException(); } // _port.ClearReceiveBuffer();
 
             if (resultLen == 0)
             {   //happens on write multiples
@@ -139,7 +153,7 @@ namespace Meadow.Modbus
             }
 
             var result = new byte[resultLen];
-            Array.Copy(buffer, headerLen, result, 0, result.Length);
+            Array.Copy(buffer, headerLen, result, 0, result.Length); // Returns the Modbus Packet Data Only, stripes Header and CRC
 
             return await Task.FromResult(result);
         }
