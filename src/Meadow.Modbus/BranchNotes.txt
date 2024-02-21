@@ -12,3 +12,5 @@ Since no response from previous PR & Issues posted to Github, I have decided to 
 ** Aug 2023 PR was accepted & merged into the Meadows Modbus library, however is missing WriteMultipleCoils feature! 
 	Ref GitHub Issue about adding this from PTSS Repo https://github.com/WildernessLabs/Meadow.Modbus/issues/26
 	https://github.com/PRIMETSS/Meadow.Modbus/blob/PTSSLocalDev-Add-WriteMultipleCoils/src/Meadow.Modbus/Clients/ModbusClientBase.cs#L246
+
+await ReadInputRegisters() does not return [ ****** Came Good *****]
